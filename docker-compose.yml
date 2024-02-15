@@ -1,0 +1,38 @@
+services:
+  traefik:
+    image: 'traefik:v2.10'
+    command:
+      - '--log.level=DEBUG'
+      - '--api.insecure=true'
+      - '--providers.docker=true'
+      - '--providers.docker.exposedbydefault=false'
+      - '--entrypoints.web.address=:80'
+    ports:
+      - '80:80'
+      - '8080:8080'
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock:ro'
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    env_file:
+      - ./frontend/.env.local
+    expose:
+      - 3000
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.frontend.rule=Host(`frontend.localhost`)
+      - traefik.http.routers.frontend.entrypoints=web
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./backend/.env.local
+    expose:
+      - 3000
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.backend.rule=Host(`backend.localhost`)
+      - traefik.http.routers.backend.entrypoints=web
